@@ -25,7 +25,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class DishServiceimpl implements DishService {
+public class DishServiceImpl implements DishService {
 
     @Autowired
     private DishMapper dishMapper;
@@ -98,6 +98,15 @@ public class DishServiceimpl implements DishService {
             flavors.forEach(dishFlavor -> dishFlavor.setDishId(dishDTO.getId()));
             dishFlavorMapper.insertBatch(flavors);
         }
+    }
+
+    @Override
+    public List<Dish> list(Long categoryId) {
+        Dish dish = Dish.builder()
+                .categoryId(categoryId)
+                .status(StatusConstant.ENABLE)
+                .build();
+        return dishMapper.list(dish);
     }
 
 
