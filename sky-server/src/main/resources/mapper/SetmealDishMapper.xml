@@ -7,8 +7,7 @@
         price, copies) VALUES
         <foreach collection="setmealDishes" item="setmealDish" separator=",">
             (#{setmealDish.setmealId}, #{setmealDish.dishId}, #{setmealDish.name},
-            #{setmealDish.price}, #{setmealDish.copies},
-            )
+            #{setmealDish.price}, #{setmealDish.copies})
         </foreach>
     </insert>
 
