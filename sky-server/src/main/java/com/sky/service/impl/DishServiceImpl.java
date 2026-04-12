@@ -42,6 +42,7 @@ public class DishServiceImpl implements DishService {
 
     /**
      * 条件查询菜品和口味
+     *
      * @param dish
      * @return
      */
@@ -52,7 +53,7 @@ public class DishServiceImpl implements DishService {
 
         for (Dish d : dishList) {
             DishVO dishVO = new DishVO();
-            BeanUtils.copyProperties(d,dishVO);
+            BeanUtils.copyProperties(d, dishVO);
 
             //根据菜品id查询对应的口味
             List<DishFlavor> flavors = dishFlavorMapper.getByDishId(d.getId());
@@ -137,7 +138,23 @@ public class DishServiceImpl implements DishService {
         return dishMapper.list(dish);
     }
 
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        Dish dish = Dish.builder()
+                .id(id)
+                .status(status)
+                .build();
 
+        if (status == StatusConstant.DISABLE) {
+            //如果当前状态是停售状态，将当前菜品的id，查询是否关联了套餐，如果关联了则无法进行停售操作
+            int count = setmealDishMapper.countByDishId(id);
+            if (count > 0) {
+                //当前菜品关联了套餐
+                throw new DeletionNotAllowedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
+            }
+        }
+        dishMapper.update(dish);
+    }
 
 
 }

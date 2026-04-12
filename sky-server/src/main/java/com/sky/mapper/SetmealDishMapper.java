@@ -22,4 +22,7 @@ public interface SetmealDishMapper {
 
     @Select("select * from setmeal_dish where setmeal_id = #{id}")
     List<SetmealDish> getBySetmealId(Long id);
+
+    @Select("select count(1) from setmeal_dish where dish_id = #{id}")
+    int countByDishId(Long id);
 }

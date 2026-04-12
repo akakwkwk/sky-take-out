@@ -42,6 +42,7 @@ public class DishController {
         }//缓存存在
 
 
+        //缓存不存在
         Dish dish = new Dish();
         dish.setCategoryId(categoryId);
         dish.setStatus(StatusConstant.ENABLE);//查询起售中的菜品
