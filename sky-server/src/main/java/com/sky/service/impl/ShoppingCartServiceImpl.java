@@ -34,7 +34,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);
         shoppingCart.setUserId(BaseContext.getCurrentId());
 
-        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);//购物车中查询当前菜品或者套餐是否在购物车中
 
         if (list != null && list.size() > 0) {
             ShoppingCart cart = list.get(0);//购物车中存在,取出第一个购物车对象
@@ -64,4 +64,14 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             shoppingCartMapper.insert(shoppingCart);
         }
     }
+
+    @Override
+    public List<ShoppingCart> list() {
+        Long currentId = BaseContext.getCurrentId();
+        ShoppingCart shoppingCart = ShoppingCart.builder().userId(currentId).build();
+        return shoppingCartMapper.list(shoppingCart);
+
+    }
+
+
 }
