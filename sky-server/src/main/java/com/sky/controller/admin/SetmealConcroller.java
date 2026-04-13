@@ -8,6 +8,7 @@ import com.sky.service.impl.SetmealServiceImpl;
 import com.sky.vo.SetmealVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class SetmealConcroller {
     private SetmealServiceImpl setmealService;
 
     @PostMapping
+    @CacheEvict(value = "setmealCache",key = "#setmealDTO.categoryId")
     public Result saveWithDish(@RequestBody SetmealDTO setmealDTO) {
         log.info("新增套餐：{}", setmealDTO);
         setmealService.saveWithDish(setmealDTO);
@@ -37,6 +39,7 @@ public class SetmealConcroller {
 
 
      @DeleteMapping
+     @CacheEvict(value = "setmealCache",allEntries = true)
      public Result delete(@RequestParam List<Long> ids){
          log.info("批量删除：{}", ids);
          setmealService.delete(ids);
@@ -44,6 +47,7 @@ public class SetmealConcroller {
     }
 
     @PutMapping
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result update(@RequestBody SetmealDTO setmealDTO){
         log.info("编辑套餐：{}", setmealDTO);
         setmealService.updateWithDish(setmealDTO);
@@ -58,6 +62,7 @@ public class SetmealConcroller {
     }
 
     @PostMapping("/status/{status}")
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result startOrStop(@PathVariable Integer status, @RequestParam Long id){
         log.info("启用或禁用套餐：{}, 状态：{}", id, status);
         setmealService.startOrStop(status, id);
