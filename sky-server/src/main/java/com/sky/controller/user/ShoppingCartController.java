@@ -28,4 +28,11 @@ public class ShoppingCartController {
         log.info("查询购物车");
         return Result.success(shoppingCartService.list());
     }
+
+    @DeleteMapping("/clean")
+    public Result clean() {
+        log.info("清空购物车");
+        shoppingCartService.clean();
+        return Result.success();
+    }
 }
