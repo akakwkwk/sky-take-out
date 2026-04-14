@@ -46,10 +46,8 @@ public class AddressBookServiceImpl implements AddressBookService {
     }
 
     @Override
-    public void delete() {
-        AddressBook addressBook = new AddressBook();
-        addressBook.setUserId(BaseContext.getCurrentId());
-        addressBookMapper.delete(addressBook.getUserId());
+    public void delete(Long id) {
+        addressBookMapper.delete(id);
     }
 
     @Override

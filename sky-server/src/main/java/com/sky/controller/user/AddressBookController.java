@@ -1,11 +1,9 @@
 package com.sky.controller.user;
 
-import com.sky.context.BaseContext;
 import com.sky.entity.AddressBook;
 import com.sky.result.Result;
 import com.sky.service.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,9 +51,9 @@ public class AddressBookController {
     }
 
     @DeleteMapping
-    public Result delete(){
-        log.info("删除地址");
-        addressBookService.delete();
+    public Result delete(@RequestParam Long id){
+        log.info("删除地址{}",id);
+        addressBookService.delete(id);
         return Result.success();
     }
 
