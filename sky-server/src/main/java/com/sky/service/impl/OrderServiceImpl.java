@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,25 +156,62 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PageResult pageQuery(Integer page, Integer pageSize, Integer status) {
-        PageHelper.startPage(page, pageSize);
+        PageHelper.startPage(page, pageSize);//开启分页
 
-        OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();
+        OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();//封装查询参数,封装当前登录用户的id,订单状态
         ordersPageQueryDTO.setStatus(status);
         ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
 
-        Page<Orders> pagedQuery = orderMapper.pageQuery(ordersPageQueryDTO);
-        List<OrderVO> list = new ArrayList<>();
+        Page<Orders> pagedQuery = orderMapper.pageQuery(ordersPageQueryDTO);//查询分页后的结果
+
+        List<OrderVO> list = new ArrayList<>();//创建OrderVO集合，用于存放查询后的结果,这里用VO没问题
         if (pagedQuery != null && !pagedQuery.isEmpty()) {
             for (Orders orders : pagedQuery) {
                 OrderVO orderVO = new OrderVO();
                 BeanUtils.copyProperties(orders, orderVO);
                 // 获取订单详情，并确保不为 null
-                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(orders.getId());
-                orderVO.setOrderDetailList(orderDetails != null ? orderDetails : new ArrayList<>());
+                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(orders.getId());//这里要用details!!不然会报空指针异常
+                orderVO.setOrderDetailList(orderDetails != null ? orderDetails : new ArrayList<>());//判断订单详情是否为 null，为 null 则创建一个空的订单详情列表
                 list.add(orderVO);
             }
         }
         return new PageResult(pagedQuery.getTotal(), list);
+    }
+
+    @Override
+    public OrderVO getOrderDetail(Long id) {
+        Orders orders =orderMapper.getById(id);
+
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);//获取订单详情
+
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders, orderVO);
+        orderVO.setOrderDetailList(orderDetailList);
+        return orderVO;
+    }
+
+    @Override
+    public void userCancelById(Long id) {
+        Orders orders = orderMapper.getById(id);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 已取消则直接返回（幂等）
+        if (Objects.equals(orders.getStatus(), Orders.CANCELLED)) {
+            return;
+        }
+        // 只有待付款(1)或待接单(2)状态可以取消
+        if (!Objects.equals(orders.getStatus(), Orders.PENDING_PAYMENT) && !Objects.equals(orders.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        /*// 已支付的订单不允许取消
+        if (Objects.equals(orders.getPayStatus(), Orders.PAID)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_PAID);
+        }*/
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelReason("用户取消");
+        orders.setCancelTime(LocalDateTime.now());
+        orderMapper.update(orders);
     }
 
 }
