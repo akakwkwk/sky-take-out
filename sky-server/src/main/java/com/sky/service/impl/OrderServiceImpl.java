@@ -5,15 +5,14 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
+import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.*;
@@ -22,7 +21,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -319,6 +320,7 @@ public class OrderServiceImpl implements OrderService {
         return new PageResult(page.getTotal(), orderVOList);
     }
 
+
     private String getOrderDishes(Orders orders) {
         // 查询订单菜品详情信息（订单中的菜品和数量）
         List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
@@ -334,4 +336,129 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    @Override
+    public OrderStatisticsVO statistics() {
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setToBeConfirmed(orderMapper.countStatus(Orders.TO_BE_CONFIRMED));
+        orderStatisticsVO.setConfirmed(orderMapper.countStatus(Orders.CONFIRMED));
+        orderStatisticsVO.setDeliveryInProgress(orderMapper.countStatus(Orders.DELIVERY_IN_PROGRESS));
+        return orderStatisticsVO;
+    }
+
+    @Override
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        Orders orders = Orders.builder()
+                .id(ordersConfirmDTO.getId())
+                .status(Orders.CONFIRMED)
+                .build();
+        orderMapper.update(orders);
+    }
+
+    /*商家拒单其实就是将订单状态修改为“已取消”
+      只有订单处于“待接单”状态时可以执行拒单操作
+      商家拒单时需要指定拒单原因
+      商家拒单时，如果用户已经完成了支付，需要为用户退款*/
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders ordersDB = orderMapper.getById(ordersRejectionDTO.getId());
+        if (!Objects.equals(ordersDB.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }//订单状态不是待接单，则不能拒单
+
+        Orders orders = Orders.builder()
+                .id(ordersRejectionDTO.getId())
+                .status(Orders.CANCELLED)
+                .rejectionReason(ordersRejectionDTO.getRejectionReason())//拒单原因
+                .cancelTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(orders);
+
+        //如果用户已经完成支付，需要退款
+        // 处理退款（模拟）
+        if (Objects.equals(ordersDB.getPayStatus(), Orders.PAID)) {
+            // 模拟退款成功，记录日志
+            log.info("模拟退款成功：订单号={}，金额={}", ordersDB.getNumber(), ordersDB.getAmount());
+
+            // 如果需要，可更新支付状态为“退款”
+            Orders refundUpdate = Orders.builder()
+                    .id(ordersDB.getId())
+                    .payStatus(Orders.REFUND)
+                    .build();
+            orderMapper.update(refundUpdate);
+        }
+    }
+        /** 取消订单其实就是将订单状态修改为“已取消”
+         * 商家取消订单时需要指定取消原因
+         * 商家取消订单时，如果用户已经完成了支付，需要为用户退款*/
+    @Override
+    public void orderCancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders ordersDB = orderMapper.getById(ordersCancelDTO.getId());
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        
+        // 已取消或已完成的订单不允许再次取消
+        if (Objects.equals(ordersDB.getStatus(), Orders.CANCELLED)) {
+            log.warn("订单已取消，无需重复操作，订单ID：{}", ordersCancelDTO.getId());
+            return;
+        }
+        if (Objects.equals(ordersDB.getStatus(), Orders.COMPLETED)) {
+            throw new OrderBusinessException("已完成订单无法取消");
+        }
+        
+        // 只有待付款、待接单、已接单状态可以取消
+        if (!Objects.equals(ordersDB.getStatus(), Orders.PENDING_PAYMENT) 
+                && !Objects.equals(ordersDB.getStatus(), Orders.TO_BE_CONFIRMED)
+                && !Objects.equals(ordersDB.getStatus(), Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        
+        Orders orders = Orders.builder()
+                .id(ordersCancelDTO.getId())
+                .status(Orders.CANCELLED)
+                .cancelReason(ordersCancelDTO.getCancelReason())
+                .cancelTime(LocalDateTime.now())
+                .build();
+                orderMapper.update(orders);
+                //如果用户已经完成支付，需要退款
+        if (Objects.equals(ordersDB.getPayStatus(), Orders.PAID)) {
+            // 模拟退款成功，记录日志
+            log.info("模拟退款成功：订单号={}，金额={}", ordersDB.getNumber(), ordersDB.getAmount());
+            // 如果需要，可更新支付状态为"退款"
+            Orders refundUpdate = Orders.builder()
+                    .id(ordersDB.getId())
+                    .payStatus(Orders.REFUND)
+                    .build();
+                    orderMapper.update(refundUpdate);
+        }
+    }
+
+    /** 派送订单其实就是将订单状态修改为“派送中”
+     * 只有状态为“待派送”的订单可以执行派送订单操作*/
+    @Override
+    public void delivery(Long id) {
+        Orders ordersDB = orderMapper.getById(id);
+        if (!Objects.equals(ordersDB.getStatus(), Orders.CONFIRMED)) {//订单状态不是待派送，则不能派送
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        Orders orders = Orders.builder()
+                .id(id)
+                .status(Orders.DELIVERY_IN_PROGRESS)
+                .build();
+                orderMapper.update(orders);
+    }
+
+    @Override
+    public void complete(Long id) {
+        Orders ordersDB = orderMapper.getById(id);
+        if (!Objects.equals(ordersDB.getStatus(), Orders.DELIVERY_IN_PROGRESS)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        Orders orders = Orders.builder()
+                .id(id)
+                .status(Orders.COMPLETED)
+                .deliveryTime(LocalDateTime.now())
+                .build();
+                orderMapper.update(orders);
+    }
 }
