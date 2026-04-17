@@ -1,8 +1,10 @@
 package com.sky.service.impl;
 import com.sky.context.BaseContext;
 import com.sky.mapper.OrderMapper;
+import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.TurnoverReportVO;
+import com.sky.vo.UserReportVO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,10 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private  OrderMapper orderMapper;
+    @Autowired
+    private UserMapper userMapper;
     @Override
     public TurnoverReportVO turnoverStatistics(LocalDate begin, LocalDate end) {
-        TurnoverReportVO turnoverReportVO = new TurnoverReportVO();
         List<LocalDate> dateList = new ArrayList<>();// 日期
 
         while (begin.isBefore(end)){
@@ -50,6 +53,35 @@ public class ReportServiceImpl implements ReportService {
         return TurnoverReportVO.builder()
                 .dateList(StringUtils.join(dateList, ","))
                 .turnoverList(StringUtils.join(turnoverList, ","))
+                .build();
+    }
+
+    @Override
+    public UserReportVO userStatistics(LocalDate begin, LocalDate end) {
+        List<LocalDate> dateList = new ArrayList<>();
+        while (begin.isBefore(end)){
+            dateList.add(begin);
+            begin = begin.plusDays(1);
+        }
+        dateList.add(end);
+        String dateListString = StringUtils.join(dateList, ",");
+        List<Integer> newUserList = new ArrayList<>();
+        List<Integer> totalUserList = new ArrayList<>();
+        for (LocalDate localDate : dateList) {
+            LocalDateTime beginTime = LocalDateTime.of(localDate, LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.MAX);
+
+            Map map = new HashMap();
+            map.put("end", endTime);
+            totalUserList.add(userMapper.countByMap(map));//总用户数
+
+            map.put("begin", beginTime);
+            newUserList.add(userMapper.countByMap(map));//新增用户数
+        }
+        return UserReportVO.builder()
+                .dateList(dateListString)
+                .newUserList(StringUtils.join(newUserList, ","))
+                .totalUserList(StringUtils.join(totalUserList, ","))
                 .build();
     }
 }
