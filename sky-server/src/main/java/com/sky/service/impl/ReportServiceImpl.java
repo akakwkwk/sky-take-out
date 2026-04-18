@@ -1,8 +1,10 @@
 package com.sky.service.impl;
+
 import com.sky.context.BaseContext;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
+import com.sky.vo.OrderReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import org.apache.commons.lang3.StringUtils;
@@ -21,14 +23,15 @@ import java.util.Map;
 public class ReportServiceImpl implements ReportService {
 
     @Autowired
-    private  OrderMapper orderMapper;
+    private OrderMapper orderMapper;
     @Autowired
     private UserMapper userMapper;
+
     @Override
     public TurnoverReportVO turnoverStatistics(LocalDate begin, LocalDate end) {
         List<LocalDate> dateList = new ArrayList<>();// 日期
 
-        while (begin.isBefore(end)){
+        while (begin.isBefore(end)) {
             dateList.add(begin);
             begin = begin.plusDays(1);
         }
@@ -45,7 +48,7 @@ public class ReportServiceImpl implements ReportService {
             map.put("end", endTime);
             map.put("status", 5);
             Double turnover = orderMapper.sumByMap(map);
-            if (turnover == null){
+            if (turnover == null) {
                 turnover = 0.0;
             }//turnover 为空的话默认为0
             turnoverList.add(turnover);
@@ -59,7 +62,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public UserReportVO userStatistics(LocalDate begin, LocalDate end) {
         List<LocalDate> dateList = new ArrayList<>();
-        while (begin.isBefore(end)){
+        while (begin.isBefore(end)) {
             dateList.add(begin);
             begin = begin.plusDays(1);
         }
@@ -82,6 +85,38 @@ public class ReportServiceImpl implements ReportService {
                 .dateList(dateListString)
                 .newUserList(StringUtils.join(newUserList, ","))
                 .totalUserList(StringUtils.join(totalUserList, ","))
+                .build();
+    }
+
+    @Override
+    public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end) {
+        List<LocalDate> dateList = new ArrayList<>();
+        while (begin.isBefore(end)) {
+            dateList.add(begin);
+            begin = begin.plusDays(1);
+        }
+        dateList.add(end);
+        String dateListString = StringUtils.join(dateList, ",");
+
+        List<Integer> orderCountList = new ArrayList<>();
+        List<Integer> validOrderCountList = new ArrayList<>();
+        for (LocalDate localDate : dateList) {
+            LocalDateTime beginTime = LocalDateTime.of(localDate, LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.MAX);
+            Map map = new HashMap();
+            map.put("begin", beginTime);
+            map.put("end", endTime);
+            orderCountList.add(orderMapper.countByMap(map));//订单总数
+            map.put("status", 5);
+            validOrderCountList.add(orderMapper.countByMap(map));//订单完成数
+        }
+        return OrderReportVO.builder()
+                .dateList(dateListString)
+                .orderCountList(StringUtils.join(orderCountList, ","))
+                .validOrderCountList(StringUtils.join(validOrderCountList, ","))
+                .totalOrderCount(orderCountList.stream().reduce(Integer::sum).get())
+                .validOrderCount(validOrderCountList.stream().reduce(Integer::sum).get())
+                .orderCompletionRate(validOrderCountList.stream().reduce(Integer::sum).get() * 1.0 / orderCountList.stream().reduce(Integer::sum).get())
                 .build();
     }
 }
