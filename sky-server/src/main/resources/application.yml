@@ -7,22 +7,21 @@ spring:
   main:
     allow-circular-references: true
   datasource:
-    druid:
-      driver-class-name: ${sky.datasource.driver-class-name}
-      url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
-      username: ${sky.datasource.username}
-      password: ${sky.datasource.password}
-  redis:
-    host: ${sky.redis.host}
-    port: ${sky.redis.port}
-    database: ${sky.redis.database}
+    driver-class-name: ${sky.datasource.driver-class-name}
+    url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${sky.datasource.username}
+    password: ${sky.datasource.password}
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: ${sky.redis.host}
+      port: ${sky.redis.port}
+      database: ${sky.redis.database}
 
 mybatis:
-  #mapper配置文件
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.sky.entity
   configuration:
-    #开启驼峰命名
     map-underscore-to-camel-case: true
 
 logging:
@@ -35,14 +34,11 @@ logging:
 
 sky:
   jwt:
-    # 设置jwt签名加密时使用的秘钥
-    admin-secret-key: itcast
-    # 设置jwt过期时间
+    admin-secret-key: itcast2026itcast2026itcast2026itcast
     admin-ttl: 7200000
-    # 设置前端传递过来的令牌名称
     admin-token-name: token
 
-    user-secret-key: itcast
+    user-secret-key: itcast2026itcast2026itcast2026itcast
     user-ttl: 7200000
     user-token-name: authentication
   alioss:

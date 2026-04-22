@@ -8,7 +8,7 @@ import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +23,7 @@ public class OrderController {
 
 
     @PostMapping("submit")
+    @Operation(summary = "用户下单")
     public Result<OrderSubmitVO> submit(@RequestBody OrdersSubmitDTO ordersSubmitDTO) {
         log.info("用户下单：{}", ordersSubmitDTO);
         OrderSubmitVO orderSubmitVO =orderService.submit(ordersSubmitDTO);
@@ -35,7 +36,7 @@ public class OrderController {
      * @return
      */
     @PutMapping("/payment")
-    @ApiOperation("订单支付")
+    @Operation(summary = "订单支付")
     public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) throws Exception {
         log.info("订单支付：{}", ordersPaymentDTO);
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
@@ -45,6 +46,7 @@ public class OrderController {
     }
 
     @GetMapping("/historyOrders")
+    @Operation(summary = "查询历史订单")
     public Result<PageResult> historyOrders(Integer page, Integer pageSize, Integer status) {
         log.info("查询历史订单：page = {}, pageSize = {}, status = {}", page, pageSize, status);
         PageResult pageResult = orderService.pageQuery(page, pageSize, status);
@@ -52,6 +54,7 @@ public class OrderController {
     }
 
     @GetMapping("/orderDetail/{id}")
+    @Operation(summary = "查询订单详情")
     public Result<OrderVO> orderDetail(@PathVariable Long id) {
         log.info("查询订单详情，订单id为：{}", id);
         OrderVO orderVO = orderService.getOrderDetail(id);
@@ -59,6 +62,7 @@ public class OrderController {
     }
 
     @PutMapping("/cancel/{id}")
+    @Operation(summary = "用户取消订单")
     public Result cancel(@PathVariable Long id) {
         log.info("用户取消订单，订单id为：{}", id);
         orderService.userCancelById(id);
@@ -66,6 +70,7 @@ public class OrderController {
     }
 
     @PostMapping("/repetition/{id}")
+    @Operation(summary = "再来一单")
     public Result repetition(@PathVariable Long id) {
         log.info("用户再来一单，订单id为：{}", id);
         orderService.repetition(id);
@@ -73,6 +78,7 @@ public class OrderController {
     }
 
     @GetMapping("/reminder/{id}")
+    @Operation(summary = "订单提醒")
     public Result reminder(@PathVariable Long id) {
         log.info("订单提醒，订单id为：{}", id);
         orderService.reminder(id);

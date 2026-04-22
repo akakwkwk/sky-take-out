@@ -5,8 +5,8 @@ import com.sky.entity.Dish;
 import com.sky.result.Result;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,6 +19,7 @@ import java.util.List;
 @RestController("userDishController")
 @RequestMapping("/user/dish")
 @Slf4j
+@Tag(name = "菜品相关接口")
 public class DishController {
     @Autowired
     private DishService dishService;
@@ -33,19 +34,19 @@ public class DishController {
      * @return
      */
     @GetMapping("/list")
+    @Operation(summary = "根据分类id查询菜品")
     public Result<List<DishVO>> list(Long categoryId) {
 
         String key = "dish_" + categoryId;
         List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);
         if (list != null && list.size() > 0) {
             return Result.success(list);
-        }//缓存存在
+        }
 
 
-        //缓存不存在
         Dish dish = new Dish();
         dish.setCategoryId(categoryId);
-        dish.setStatus(StatusConstant.ENABLE);//查询起售中的菜品
+        dish.setStatus(StatusConstant.ENABLE);
 
         list = dishService.listWithFlavor(dish);
         redisTemplate.opsForValue().set(key, list);
