@@ -33,6 +33,7 @@
         <jjwt>0.12.5</jjwt>
         <jaxb-api>4.0.2</jaxb-api>
         <poi>5.2.5</poi>
+        <spring-ai>1.0.0</spring-ai>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -129,11 +130,21 @@
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi}</version>
             </dependency>
+
             <!--微信支付-->
             <dependency>
                 <groupId>com.github.wechatpay-apiv3</groupId>
                 <artifactId>wechatpay-apache-httpclient</artifactId>
                 <version>0.4.8</version>
+            </dependency>
+
+            <!-- Spring AI BOM -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

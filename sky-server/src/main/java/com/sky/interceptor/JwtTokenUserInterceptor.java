@@ -24,15 +24,6 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
     @Autowired
     private JwtProperties jwtProperties;
 
-    /**
-     * 校验jwt
-     *
-     * @param request
-     * @param response
-     * @param handler
-     * @return
-     * @throws Exception
-     */
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!(handler instanceof HandlerMethod)) {
             return true;
@@ -49,6 +40,11 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
             BaseContext.setCurrentId(userId);
             return true;
         } catch (Exception ex) {
+            // AI客服接口允许未登录访问（token缺失时不拦截）
+            if (request.getRequestURI().contains("/user/ai/")) {
+                log.info("AI接口未携带有效token，以未登录模式放行");
+                return true;
+            }
             response.setStatus(401);
             return false;
         }
