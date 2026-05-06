@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>瑞吉外卖</title>
+    <link href="css/404.6a750851.css" rel="prefetch">
+    <link href="css/dashboard.8da8967e.css" rel="prefetch">
+    <link href="css/login.f8377ced.css" rel="prefetch">
+    <link href="css/shopTable.5fd29e98.css" rel="prefetch">
+    <link href="js/404.c61770cf.js" rel="prefetch">
+    <link href="js/dashboard.630a609e.js" rel="prefetch">
+    <link href="js/login.90288d75.js" rel="prefetch">
+    <link href="js/shopTable.fe534d8f.js" rel="prefetch">
+    <link href="css/app.fd9b670b.css" rel="preload" as="style">
+    <link href="css/chunk-vendors.37cc3fbd.css" rel="preload" as="style">
+    <link href="js/app.d0aa4eb3.js" rel="preload" as="script">
+    <link href="js/chunk-vendors.9b7e46a0.js" rel="preload" as="script">
+    <link href="css/chunk-vendors.37cc3fbd.css" rel="stylesheet">
+    <link href="css/app.fd9b670b.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/icons/favicon-16x16.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4DBA87">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Vue Typescript Admin">
+    <link rel="apple-touch-icon" href="img/icons/apple-touch-icon-152x152.png">
+    <link rel="mask-icon" href="img/icons/safari-pinned-tab.svg" color="#4DBA87">
+    <meta name="msapplication-TileImage" content="img/icons/msapplication-icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#000000">
+</head>
+<body>
+    <noscript><strong>We're sorry but doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript>
+    
+    <div id="app"></div>
+    
+    <script src="js/chunk-vendors.9b7e46a0.js"></script>
+    <script src="js/app.d0aa4eb3.js"></script>
+
+    <div id="ai-chat-container" style="position:fixed; bottom:50px; right:80px; z-index:10000; font-family: 'PingFang SC', sans-serif; display: none;">
+        <div id="ai-btn" style="width:70px; height:70px; background:#ff9734; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition: 0.3s;">
+            <span style="color:white; font-size:28px;">🤖</span>
+        </div>
+
+        <div id="ai-window" style="display:none; width:400px; height:550px; background:white; border-radius:15px; flex-direction:column; box-shadow:0 8px 24px rgba(0,0,0,0.15); overflow:hidden; position:absolute; bottom:70px; right:0;">
+            <div style="background:#ff9734; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold;">苍穹智能管家</span>
+                <span id="close-ai" style="cursor:pointer; font-size:20px;">×</span>
+            </div>
+            <div id="ai-messages" style="flex:1; padding:15px; overflow-y:auto; background:#f7f8fa; font-size:14px; line-height:1.6;">
+                <div style="margin-bottom:10px;"><span style="background:#eef0f4; padding:8px 12px; border-radius:10px; display:inline-block;">您好！我是您的外卖经营助手，可以帮您查订单、看数据哦~</span></div>
+            </div>
+            <div style="padding:10px; border-top:1px solid #eee; display:flex;">
+                <input id="ai-input" type="text" placeholder="输入问题..." style="flex:1; border:1px solid #ddd; padding:8px; border-radius:5px; outline:none;">
+                <button id="ai-send" style="margin-left:5px; background:#ff9734; border:none; color:white; padding:0 15px; border-radius:5px; cursor:pointer;">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const container = document.getElementById('ai-chat-container');
+        const aiBtn = document.getElementById('ai-btn');
+        const aiWindow = document.getElementById('ai-window');
+        const closeAi = document.getElementById('close-ai');
+        const aiInput = document.getElementById('ai-input');
+        const aiSend = document.getElementById('ai-send');
+        const aiMessages = document.getElementById('ai-messages');
+
+        // --- 核心：自动判断显示/隐藏逻辑 ---
+        function checkLoginStatus() {
+            // 通过 URL 判断，单页面路由通常包含 #/login
+            const isAtLogin = window.location.href.includes('login');
+            
+            if (isAtLogin) {
+                container.style.display = 'none'; // 登录页隐藏
+                aiWindow.style.display = 'none';
+            } else {
+                container.style.display = 'block'; // 登录后显示
+            }
+        }
+
+        // 1. 初始化检查
+        checkLoginStatus();
+        // 2. 监听 URL 变化
+        window.addEventListener('hashchange', checkLoginStatus);
+        // 3. 针对部分跳转，加入每秒轮询确保准确
+        setInterval(checkLoginStatus, 1000);
+
+        // --- 原有交互逻辑保持不变 ---
+        aiBtn.onclick = () => { aiWindow.style.display = aiWindow.style.display === 'none' ? 'flex' : 'none'; };
+        closeAi.onclick = () => { aiWindow.style.display = 'none'; };
+
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.style.marginBottom = '10px';
+            div.style.textAlign = role === 'user' ? 'right' : 'left';
+            const span = document.createElement('span');
+            span.style.display = 'inline-block';
+            span.style.padding = '8px 12px';
+            span.style.borderRadius = '10px';
+            span.style.maxWidth = '80%';
+            span.style.background = role === 'user' ? '#ff9734' : '#eef0f4';
+            span.style.color = role === 'user' ? 'white' : 'black';
+            span.innerText = text;
+            div.appendChild(span);
+            aiMessages.appendChild(div);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : '';
+        }
+
+        let isLoading = false;
+        function sendMessage() {
+            const text = aiInput.value.trim();
+            if(!text || isLoading) return;
+            addMessage('user', text);
+            aiInput.value = '';
+            isLoading = true;
+            aiSend.disabled = true;
+            aiSend.textContent = '...';
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.marginBottom = '10px';
+            loadingDiv.id = 'ai-loading';
+            const loadingSpan = document.createElement('span');
+            loadingSpan.style.background = '#eef0f4';
+            loadingSpan.style.padding = '8px 12px';
+            loadingSpan.style.borderRadius = '10px';
+            loadingSpan.style.display = 'inline-block';
+            loadingSpan.textContent = '正在思考中...';
+            loadingDiv.appendChild(loadingSpan);
+            aiMessages.appendChild(loadingDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+
+            fetch('/api/common/ai/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'token': getCookie('token')
+                },
+                body: JSON.stringify({ message: text })
+            })
+            .then(res => res.json())
+            .then(res => {
+                const loadEl = document.getElementById('ai-loading');
+                if(loadEl) loadEl.remove();
+                if(res.code === 1) {
+                    addMessage('ai', res.data || "抱歉，我还没准备好回答。");
+                } else {
+                    addMessage('ai', res.msg || "请求失败，请稍后重试。");
+                }
+            })
+            .catch(() => {
+                const loadEl = document.getElementById('ai-loading');
+                if(loadEl) loadEl.remove();
+                addMessage('ai', "网络连接失败，请检查后端服务。");
+            })
+            .finally(() => {
+                isLoading = false;
+                aiSend.disabled = false;
+                aiSend.textContent = '发送';
+            });
+        }
+        aiSend.onclick = sendMessage;
+        aiInput.onkeydown = (e) => { if(e.key === 'Enter') sendMessage(); };
+    })();
+    </script>
+</body>
+</html>

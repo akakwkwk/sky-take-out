@@ -1,0 +1,63 @@
+<!-- 悬浮可拖拽按钮 -->
+<movable-area wx:if="{{!isOpen}}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;">
+  <movable-view direction="all" x="280" y="500" style="width: 110rpx; height: 110rpx; pointer-events: auto;">
+    <view bindtap="onOpen" style="width: 100%; height: 100%; background: #ffc200; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.3);">
+      <text style="font-size: 40rpx;">🤖</text>
+      <text style="color: white; font-size: 20rpx; font-weight: bold; margin-top: -5rpx;">小二</text>
+    </view>
+  </movable-view>
+</movable-area>
+
+<!-- 聊天悬浮窗 -->
+<view wx:if="{{isOpen}}" class="chat-overlay" bindtap="onClose">
+  <view class="chat-window" catchtap="onStopPropagation">
+    <!-- 头部 -->
+    <view class="chat-header">
+      <view class="header-left">
+        <view class="header-avatar">🤖</view>
+        <view class="header-info">
+          <text class="header-title">智能店小二</text>
+          <text class="header-subtitle">在线 · 秒回复</text>
+        </view>
+      </view>
+      <view class="header-close" bindtap="onClose">
+        <text style="font-size: 36rpx;">✕</text>
+      </view>
+    </view>
+
+    <!-- 消息列表 -->
+    <scroll-view scroll-y="true" class="chat-list" style="height: {{scrollHeight}}px;" scroll-into-view="{{lastMessageId}}" scroll-with-animation="true">
+      <block wx:for="{{messages}}" wx:key="index">
+        <view id="msg-{{index}}" class="message-item {{item.role === 'user' ? 'user' : 'ai'}}">
+          <view class="avatar">
+            <text>{{item.role === 'user' ? '我' : '小二'}}</text>
+          </view>
+          <view class="content-box">
+            <view class="content">{{item.content}}</view>
+          </view>
+        </view>
+      </block>
+      <!-- 正在思考... -->
+      <view wx:if="{{isThinking}}" class="message-item ai">
+        <view class="avatar"><text>小二</text></view>
+        <view class="content-box">
+          <view class="content thinking">正在输入...</view>
+        </view>
+      </view>
+      <view id="bottom-anchor" style="height: 20rpx;"></view>
+    </scroll-view>
+
+    <!-- 快捷回复 -->
+    <view wx:if="{{messages.length <= 1}}" class="quick-replies">
+      <block wx:for="{{quickReplies}}" wx:key="*this">
+        <view class="quick-btn" data-text="{{item}}" bindtap="onQuickReply">{{item}}</view>
+      </block>
+    </view>
+
+    <!-- 输入区域 -->
+    <view class="input-area">
+      <input class="input" value="{{inputValue}}" bindinput="onInput" placeholder="想吃点什么？问问小二吧..." confirm-type="send" bindconfirm="onSend" placeholder-class="placeholder-style" />
+      <button class="send-btn" bindtap="onSend">发送</button>
+    </view>
+  </view>
+</view>

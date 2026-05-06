@@ -1,0 +1,42 @@
+<view class="chat-container">
+  <!-- 消息列表 -->
+  <scroll-view scroll-y="true" class="chat-list" style="height: {{scrollHeight}}px;" scroll-into-view="{{lastMessageId}}" scroll-with-animation="true">
+    <block wx:for="{{messages}}" wx:key="index">
+      <view id="msg-{{index}}" class="message-item {{item.role === 'user' ? 'user' : 'ai'}}">
+        <view class="avatar">
+          <text>{{item.role === 'user' ? '我' : '小二'}}</text>
+        </view>
+        <view class="content-box">
+          <view class="content">{{item.content}}</view>
+        </view>
+      </view>
+    </block>
+    <!-- 思考中状态 -->
+    <view wx:if="{{isThinking}}" class="message-item ai">
+      <view class="avatar"><text>小二</text></view>
+      <view class="content-box">
+        <view class="content thinking">
+          <text>正在输入</text>
+          <text class="dot-anim">...</text>
+        </view>
+      </view>
+    </view>
+    <view id="bottom-anchor" style="height: 40rpx;"></view>
+  </scroll-view>
+
+  <!-- 快捷回复 - 仅初始状态显示 -->
+  <view wx:if="{{messages.length <= 1}}" class="quick-replies">
+    <text class="quick-title">💡 您可以试试问我：</text>
+    <view class="quick-list">
+      <block wx:for="{{quickReplies}}" wx:key="*this">
+        <view class="quick-btn" data-text="{{item}}" bindtap="onQuickReply">{{item}}</view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-area">
+    <input class="input" value="{{inputValue}}" bindinput="onInput" placeholder="想吃点什么？问问小二吧..." confirm-type="send" bindconfirm="onSend" placeholder-class="placeholder-style" />
+    <button class="send-btn" bindtap="onSend">发送</button>
+  </view>
+</view>
