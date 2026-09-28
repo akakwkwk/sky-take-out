@@ -168,12 +168,18 @@ public class AiFunctionConfig {
         return request -> {
             log.info("【AI函数调用】queryHotDishesFunction");
             LocalDateTime begin = LocalDateTime.of(LocalDate.now().minusDays(7), LocalTime.MIN);
-            LocalDateTime end = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+            LocalDateTime end = LocalDateTime.of(LocalDateTime.now().toLocalDate(), LocalTime.MAX);
             List<GoodsSalesDTO> topList = orderMapper.getSalesTop10(begin, end);
+            String range = "近7天";
             if (topList == null || topList.isEmpty()) {
-                return "最近暂无热销数据，您可以浏览菜单挑选喜欢的菜品。";
+                // 近7天无销量时兜底：统计全部历史订单的销量，避免演示环境数据太旧导致榜单为空
+                topList = orderMapper.getSalesTop10(LocalDateTime.of(2000, 1, 1, 0, 0), end);
+                range = "全部时间";
             }
-            StringBuilder sb = new StringBuilder("近期热销菜品排行榜：\n");
+            if (topList == null || topList.isEmpty()) {
+                return "暂无任何热销数据，您可以浏览菜单挑选喜欢的菜品。";
+            }
+            StringBuilder sb = new StringBuilder(range + "热销菜品排行榜：\n");
             for (int i = 0; i < Math.min(topList.size(), 5); i++) {
                 GoodsSalesDTO item = topList.get(i);
                 sb.append(String.format("%d. %s — 已售%d份\n", i + 1, item.getName(), item.getNumber()));
